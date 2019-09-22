@@ -6,7 +6,7 @@ services:
   image: nginx:1.17.3
   container_name: c_nginx
   volumes:
-   - /web:/var/www/html
+   - ./cool:/usr/share/nginx/html
   ports:
    - 80:80
    - 443:443
