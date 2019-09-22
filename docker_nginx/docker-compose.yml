@@ -5,6 +5,8 @@ services:
  app:
   image: nginx:1.17.3
   container_name: c_nginx
+  volumes:
+   - /web:/var/www/html
   ports:
    - 80:80
    - 443:443
