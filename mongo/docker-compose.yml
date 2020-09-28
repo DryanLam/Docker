@@ -1,0 +1,28 @@
+neo4j:
+    image: neo4j
+    ports: 
+        - "7474:7474"
+        - "7373:7373"
+        - "7687:7687"
+    environment:
+        - NEO4J_AUTH=none
+
+mongo:
+    image: mongo
+    volumes:
+        - ./data/db:/data/db
+    environment:
+        - MONGO_DATA_DIR=/data/db
+    ports:
+        - "27017:27017"
+    command: --serviceExecutor adaptive
+
+
+mongo_connector:
+    build: ./mongo_connector
+    links:
+        - mongo
+        - neo4j
+    environment:
+        - MONGO_HOST=mongo
+        - NEO4J_HOST=neo4j
