@@ -1,0 +1,108 @@
+FROM openjdk:8
+
+LABEL authors="DRYAN LAM"
+
+#==============================
+# VERSION CONTROL
+#==============================
+ARG CHROME_VERSION="100.0.4896.127"
+ARG FIREFOX_VERSION="99.0.1"
+
+# ENV settings
+ENV DEBIAN_FRONTEND noninteractive
+ENV START_XVFB true
+ENV SCREEN_WIDTH 1920
+ENV SCREEN_HEIGHT 1080
+ENV SCREEN_DEPTH 16
+ENV SCREEN_DPI 96
+ENV DISPLAY_NUM 99
+
+# Katalon settings
+ARG KATALON_ROOT_DIR=/katalon
+ARG KATALON_BASE_ROOT_DIR=$KATALON_ROOT_DIR/base
+ENV KATALON_VERSION_FILE=$KATALON_ROOT_DIR/version
+ENV KATALON_SOFTWARE_DIR=/opt
+
+ARG KATALON_KATALON_SCRIPT_DIR=$KATALON_ROOT_DIR/scripts
+ENV PATH "$PATH:$KATALON_KATALON_SCRIPT_DIR"
+
+ENV KATALON_KATALON_ROOT_DIR=$KATALON_ROOT_DIR/katalon
+
+ARG KATALON_KATALON_INSTALL_DIR_PARENT=$KATALON_SOFTWARE_DIR
+ENV KATALON_KATALON_INSTALL_DIR=$KATALON_KATALON_INSTALL_DIR_PARENT/katalonstudio
+ENV PATH "$PATH:$KATALON_KATALON_INSTALL_DIR"
+
+ENV ECLIPSE_SANDBOX='1.11'
+
+ENV DISPLAY=':99'
+ENV DISPLAY_CONFIGURATION='1920x1080x16'
+
+
+WORKDIR /home
+
+
+#==============================
+# Setup necessary core packages
+#==============================
+RUN apt-get update \
+    && echo "Installing build dependencies" \
+    && apt-get install -qqy \
+       dirmngr \
+       fontconfig \
+       gnupg \
+       unzip \
+       wget \
+       git \
+       make \
+       apt-utils \
+	   x11vnc \
+	   xvfb \
+	   fluxbox \
+	   wmctrl \
+       curl \
+       gosu
+
+
+#==============================
+# BROWSER INSTALLATION
+#==============================
+# Set up Chrome
+COPY ./Setup/chrome-install.sh ./
+RUN chmod +x chrome-install.sh
+RUN ./chrome-install.sh
+
+# Set up Firefox
+COPY ./Setup/firefox-install.sh ./
+RUN chmod +x firefox-install.sh
+RUN ./firefox-install.sh
+
+RUN rm -f chrome-install.sh firefox-install.sh
+
+
+# Set up Katalon
+RUN mkdir -p $KATALON_KATALON_SCRIPT_DIR 
+WORKDIR $KATALON_KATALON_SCRIPT_DIR
+
+COPY ./Setup/katalon-install.sh ./
+RUN chmod +x katalon-install.sh
+RUN ./katalon-install.sh
+
+
+COPY ./Setup/katalon-execute.sh katalon-execute.sh
+RUN chmod a+x katalon-execute.sh
+COPY ./Setup/katalon-notify.sh katalon-notify.sh
+RUN chmod a+x katalon-notify.sh
+COPY ./Setup/katalonc.sh katalonc.sh
+RUN chmod a+x katalonc.sh
+
+RUN echo "PATH=\"$PATH\"" > /etc/environment
+
+CMD $KATALON_KATALON_SCRIPT_DIR/katalon-notify.sh
+
+
+# Set up entrypoint
+WORKDIR /
+
+COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod a+x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

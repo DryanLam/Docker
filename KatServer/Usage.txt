@@ -1,0 +1,29 @@
+Build: docker build -t dryanlam/katalon:8.3.0 -f Dockerfile.Kat .
+Test: 
++ docker run -t --rm dryanlam/katalon:8.3.0 cat /katalon/version
++ docker run -it --rm --name katalon dryanlam/katalon:8.3.0 /bin/bash
+
+
+Sample Docker CLI:
++ katalon-execute.sh -retry=0 -testSuiteCollectionPath="Test Suites/healthcare-tests - TS_RegressionTestCollection" -apiKey=xxx -licenseRelease=true -orgID=xxx --config -webui.autoUpdateDrivers=true
+
+
+Known Issues:
+# Fix issue of Chrome
+export JAVA_OPTS="-Dwebdriver.chrome.whitelistedIps=" 
+
+chrome:
+    image: selenium/node-chrome:3.141.59
+    container_name: chrome
+    depends_on:
+      - selenium-hub
+    environment:
+      - HUB_HOST=selenium-hub
+      - HUB_PORT=4444
+      - JAVA_OPTS=-Dwebdriver.chrome.whitelistedIps=
+	  
+options = webdriver.ChromeOptions()
+options.add_argument('--disable-dev-shm-usage')
+
+# Fix issue of Firefox
+apt-get install libdbus-glib-1-2
